@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tabel Daftar Staf / Tim Lu
+model Assignee {
+  id    String @id @default(cuid())
+  name  String
+  phone String // Format wajib: "628123456789" (tanpa + atau 0 di depan) biar URL WA jalan
+  tasks Task[]
+}
+
+// Tabel Daftar Tugas
+model Task {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  dueDate       DateTime
+  attachmentUrl String?  // Buat simpan URL gambar dari Cloudinary nanti
+  status        String   @default("PENDING") // Status default: PENDING
+  createdAt     DateTime @default(now())
+  
+  // Relasi: 1 Tugas dimiliki oleh 1 Assignee
+  assigneeId    String
+  assignee      Assignee @relation(fields: [assigneeId], references: [id])
+}
