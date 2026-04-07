@@ -1,5 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from "next";
+import "./globals.css"; // <-- INI BARIS YANG HILANG BRO 🔥
 
 export const metadata: Metadata = {
   title: "SIMT App",
@@ -26,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="id"> {/* Sekalian diganti jadi 'id' buat bahasa Indonesia */}
       <head>
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>

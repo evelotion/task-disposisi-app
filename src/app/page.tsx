@@ -212,7 +212,7 @@ export default function Home() {
             <div className="p-6 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-5 pb-10">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Judul Tugas</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Task</label>
                   <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Contoh: Revisi Laporan" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-800" />
                 </div>
 
