@@ -7,50 +7,47 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    // Tarik semua data dari database sekaligus dengan nama stafnya
     const tasks = await prisma.task.findMany({
       include: { assignee: true },
-      orderBy: { createdAt: 'desc' } // Urutkan dari yang terbaru
+      orderBy: { createdAt: 'desc' } 
     });
 
-    // Buat file Excel baru
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Rekap Disposisi');
 
-    // Tentukan kolom-kolomnya
+    // Kolom Excel udah di-update pakai struktur V2.0 (Ada Nomor Task & Lokasi, dueDate dihapus)
     worksheet.columns = [
+      { header: 'No. Tugas', key: 'taskNumber', width: 20 },
       { header: 'Tanggal Dibuat', key: 'createdAt', width: 20 },
       { header: 'Judul Tugas', key: 'title', width: 35 },
+      { header: 'Lokasi', key: 'location', width: 15 },
       { header: 'Disposisi Ke', key: 'assignee', width: 25 },
-      { header: 'Follow Up Tanggal', key: 'dueDate', width: 20 },
       { header: 'Catatan / Detail', key: 'description', width: 45 },
-      { header: 'Link Lampiran', key: 'attachmentUrl', width: 50 },
       { header: 'Status', key: 'status', width: 15 },
+      { header: 'Link Lampiran', key: 'attachmentUrl', width: 50 },
     ];
 
-    // Masukkan data ke baris Excel
     tasks.forEach(task => {
       worksheet.addRow({
+        taskNumber: task.taskNumber,
         createdAt: task.createdAt.toLocaleDateString('id-ID'),
         title: task.title,
+        location: task.location,
         assignee: task.assignee.name,
-        dueDate: task.dueDate.toLocaleDateString('id-ID'),
         description: task.description || '-',
-        attachmentUrl: task.attachmentUrl || '-',
         status: task.status,
+        attachmentUrl: task.attachmentUrl || '-',
       });
     });
 
-    // Bikin header Excelnya jadi tebal (bold)
     worksheet.getRow(1).font = { bold: true };
 
-    // Proses jadi file yang bisa didownload
     const buffer = await workbook.xlsx.writeBuffer();
 
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        'Content-Disposition': 'attachment; filename="Rekap_Disposisi.xlsx"',
+        'Content-Disposition': 'attachment; filename="Rekap_Disposisi_V2.xlsx"',
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       }
     });
