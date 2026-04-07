@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,25 +9,80 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Tabel Daftar Staf / Tim Lu
-model Assignee {
-  id    String @id @default(cuid())
-  name  String
-  phone String // Format wajib: "628123456789" (tanpa + atau 0 di depan) biar URL WA jalan
-  tasks Task[]
+// -------------------------------------------------
+// ENUM (Pilihan Tetap/Dropdown System)
+// -------------------------------------------------
+enum Role {
+  ADMIN
+  DIREKSI
+  STAF
 }
 
-// Tabel Daftar Tugas
+enum Location {
+  CABANG
+  KP
+  UNIT_KERJA
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  REVISION
+  DONE
+}
+
+// -------------------------------------------------
+// TABEL DATABASE
+// -------------------------------------------------
+
+model User {
+  id        String    @id @default(cuid())
+  nip       String    @unique // NIP jadi kunci unik buat login
+  name      String
+  phone     String
+  role      Role      @default(STAF) // Defaultnya adalah staf
+  
+  // Relasi: 1 User bisa punya banyak Task dan Log
+  tasks     Task[]    @relation("AssignedTasks") 
+  logs      TaskLog[] @relation("UserLogs")
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model Task {
-  id            String   @id @default(cuid())
+  id            String     @id @default(cuid())
+  taskNumber    String     @unique // Contoh: TSK-001
   title         String
   description   String?
-  dueDate       DateTime
-  attachmentUrl String?  // Buat simpan URL gambar dari Cloudinary nanti
-  status        String   @default("PENDING") // Status default: PENDING
-  createdAt     DateTime @default(now())
+  attachmentUrl String?
+  status        TaskStatus @default(PENDING)
+  location      Location   @default(KP) // Dari request bos lu
   
-  // Relasi: 1 Tugas dimiliki oleh 1 Assignee
+  // Tanggal Follow Up dihapus, kita pakai createdAt sebagai tanggal submit otomatis
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relasi ke User (Siapa yang dikasih tugas)
   assigneeId    String
-  assignee      Assignee @relation(fields: [assigneeId], references: [id])
+  assignee      User       @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  
+  // Relasi ke tabel TaskLog (Riwayat progress)
+  logs          TaskLog[]  @relation("TaskHistory")
+}
+
+// Tabel Baru: Untuk menyimpan riwayat chat/progress
+model TaskLog {
+  id        String   @id @default(cuid())
+  message   String   // Isi update/laporan dari staf
+  
+  // Relasi tugas mana yang diupdate
+  taskId    String
+  task      Task     @relation("TaskHistory", fields: [taskId], references: [id], onDelete: Cascade)
+  
+  // Relasi siapa yang nulis log ini
+  userId    String
+  user      User     @relation("UserLogs", fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
 }
