@@ -96,7 +96,7 @@ export default function Home() {
         const waNumber = selectedStaff.phone;
         const taskUrl = `${window.location.origin}/task/${generatedTaskNumber}`; // Link otomatis menyesuaikan domain
         
-        const waText = `Halo ${selectedStaff.name}, ada disposisi baru dari Direksi:%0A%0ANo: *${generatedTaskNumber}*%0ALokasi: ${location}%0A*${title}*%0A%0ACek detail instruksi dan lapor progress pengerjaan melalui link berikut:%0A${taskUrl}`;
+        const waText = `Halo ${selectedStaff.name}, ada disposisi baru terkait:%0A%0ANo: *${generatedTaskNumber}*%0ALokasi: ${location}%0A*${title}*%0A%0ACek detail instruksi dan lapor progress pengerjaan melalui link berikut:%0A${taskUrl}`;
         
         window.open(`https://wa.me/${waNumber}?text=${waText}`, "_blank");
       }
