@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion"; // <-- 1. Tambah import Framer Motion
 
 export default function MyTasks() {
   const router = useRouter();
@@ -69,9 +70,25 @@ export default function MyTasks() {
         <div className="flex-1 p-6 overflow-y-auto">
           <h2 className="text-lg font-extrabold text-slate-800 mb-4">Daftar Pekerjaan Anda</h2>
           
-          <div className="space-y-3 pb-10">
+          {/* UBAH pb-10 jadi pb-24 DI SINI JUGA BIAR GAK KETUTUP NAV BAR */}
+          <div className="space-y-3 pb-24">
             {isLoading ? (
-              <p className="text-center text-slate-500 text-sm mt-8">Memuat data...</p>
+              // SKELETON LOADING MY TASKS
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm animate-pulse">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="h-3 bg-slate-200 rounded w-16"></div>
+                      <div className="h-5 bg-slate-200 rounded-md w-20"></div>
+                    </div>
+                    <div className="h-4 bg-slate-200 rounded w-3/4 mb-4"></div>
+                    <div className="flex justify-between items-center text-xs">
+                      <div className="h-3 bg-slate-200 rounded w-24"></div>
+                      <div className="h-3 bg-slate-200 rounded w-16"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : tasks.length === 0 ? (
               <div className="text-center mt-12">
                 <div className="w-16 h-16 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -80,9 +97,14 @@ export default function MyTasks() {
                 <p className="text-slate-500 font-medium">Yeay! Semua tugas sudah selesai.</p>
               </div>
             ) : (
-              tasks.map(task => (
-                <div 
+              // 2. Tambahkan parameter index di map
+              tasks.map((task, index) => (
+                // 3. Ubah jadi motion.div dan pasang konfigurasi animasinya
+                <motion.div 
                   key={task.id} 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.08 }} // Delay dibikin lebih cepet dikit
                   onClick={() => router.push(`/task/${task.taskNumber}`)} 
                   className={`p-4 rounded-2xl shadow-sm border cursor-pointer transition active:scale-95 ${task.status === 'DONE' ? 'bg-slate-50 border-slate-200 opacity-70' : 'bg-white border-slate-100 hover:border-emerald-200'}`}
                 >
@@ -104,7 +126,7 @@ export default function MyTasks() {
                     </span>
                     <span>{task.location}</span>
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
           </div>

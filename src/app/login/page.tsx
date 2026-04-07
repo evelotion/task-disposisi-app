@@ -3,17 +3,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast"; // <-- Import toast
 
 export default function LoginPage() {
   const [nip, setNip] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setErrorMsg("");
+
+    // Memicu toast loading dan menyimpan ID-nya
+    const toastId = toast.loading("Mengecek data NIP...");
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -28,20 +30,22 @@ export default function LoginPage() {
         throw new Error(data.error || "Gagal login");
       }
 
-      // Simpan data user ke LocalStorage (sebagai "KTP" selama buka web)
       localStorage.setItem("user_session", JSON.stringify(data));
 
-      // Redirect otomatis sesuai Role / Jabatan
+      // Ubah toast loading tadi jadi sukses
+      toast.success(`Login berhasil, ${data.role}!`, { id: toastId });
+
       if (data.role === "ADMIN") {
         router.push("/admin");
       } else if (data.role === "DIREKSI") {
         router.push("/");
       } else {
-        router.push("/my-tasks"); // Halaman khusus staf (nanti kita buat)
+        router.push("/my-tasks"); 
       }
 
     } catch (error: any) {
-      setErrorMsg(error.message);
+      // Ubah toast loading tadi jadi error
+      toast.error(error.message, { id: toastId });
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +55,6 @@ export default function LoginPage() {
     <main className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-blue-100 flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white/50 backdrop-blur-xl p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 text-center">
         
-        {/* Ikon / Logo Dummy */}
         <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-blue-500/30 text-white">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
         </div>
@@ -72,11 +75,6 @@ export default function LoginPage() {
               className="flex h-12 w-full rounded-xl border border-white/50 bg-white/70 backdrop-blur-sm px-4 py-2 text-center text-lg font-bold text-slate-800 placeholder:text-slate-300 placeholder:font-normal focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all uppercase"
             />
           </div>
-
-          {/* Menampilkan pesan error kalau NIP salah */}
-          {errorMsg && (
-            <p className="text-red-500 text-sm font-semibold bg-red-50 py-2 rounded-lg border border-red-100">{errorMsg}</p>
-          )}
 
           <button 
             type="submit" 

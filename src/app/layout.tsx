@@ -1,6 +1,7 @@
-// src/app/layout.tsx
-import type { Metadata, Viewport } from "next";
-import "./globals.css"; // <-- INI BARIS YANG HILANG BRO 🔥
+﻿import type { Metadata, Viewport } from "next";
+import { Toaster } from "react-hot-toast";
+import BottomNav from "../components/BottomNav";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "SIMT App",
@@ -18,7 +19,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false, // Biar gak bisa di-zoom, makin kerasa kayak app native
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -27,11 +28,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id"> {/* Sekalian diganti jadi 'id' buat bahasa Indonesia */}
+    <html lang="id">
       <head>
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
-      <body>{children}</body>
+      {/* Tambahkan bg-slate-100 di body biar warna background konsisten */}
+      <body className="bg-slate-100">
+        {children}
+        <BottomNav />
+        <Toaster 
+          position="top-center" 
+          toastOptions={{
+            duration: 3000,
+            style: {
+              borderRadius: '12px',
+              background: '#333',
+              color: '#fff',
+            },
+          }} 
+        />
+      </body>
     </html>
   );
 }

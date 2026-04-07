@@ -1,7 +1,9 @@
+// src/app/dashboard/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion"; // <-- Import Framer Motion
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -63,10 +65,35 @@ export default function Dashboard() {
 
         {/* List Tugas */}
         <div className="flex-1 overflow-y-auto p-4 scroll-smooth">
-          <div className="space-y-4 pb-10">
+          {/* UBAH pb-10 jadi pb-24 DI SINI BIAR GAK KETUTUP NAV BAR BAWAH */}
+          <div className="space-y-4 pb-24">
             {isLoading ? (
-              <div className="flex justify-center mt-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              // SKELETON LOADING DASHBOARD
+              <div className="space-y-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm animate-pulse">
+                    {/* Checkbox & Title Placeholder */}
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-slate-200 shrink-0"></div>
+                      <div className="h-5 bg-slate-200 rounded-md w-3/4 mt-0.5"></div>
+                    </div>
+                    
+                    {/* Catatan Placeholder */}
+                    <div className="pl-9 space-y-2 mb-4">
+                      <div className="h-3 bg-slate-200 rounded w-full"></div>
+                      <div className="h-3 bg-slate-200 rounded w-5/6"></div>
+                    </div>
+                    
+                    {/* Footer Assignee & Date Placeholder */}
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 ml-9">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-slate-200 shrink-0"></div>
+                        <div className="h-4 bg-slate-200 rounded w-20"></div>
+                      </div>
+                      <div className="h-4 bg-slate-200 rounded w-16"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : tasks.length === 0 ? (
                <div className="flex flex-col items-center justify-center mt-20 text-center">
@@ -76,8 +103,14 @@ export default function Dashboard() {
                  <p className="text-slate-500 font-medium">Belum ada tugas.</p>
                </div>
             ) : (
-              tasks.map((task) => (
-                <div key={task.id} className={`p-5 rounded-2xl shadow-sm border transition-all duration-300 ${task.status === "DONE" ? "bg-slate-50/70 border-slate-100 opacity-75" : "bg-white border-slate-100"}`}>
+              tasks.map((task, index) => (
+                <motion.div 
+                  key={task.id} 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className={`p-5 rounded-2xl shadow-sm border transition-all duration-300 ${task.status === "DONE" ? "bg-slate-50/70 border-slate-100 opacity-75" : "bg-white border-slate-100"}`}
+                >
                   
                   {/* Title & Checkbox Area */}
                   <div className="flex items-start gap-3 mb-3">
@@ -133,7 +166,7 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                </div>
+                </motion.div>
               ))
             )}
           </div>
