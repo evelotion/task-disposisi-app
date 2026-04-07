@@ -5,15 +5,20 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // GET: Ambil detail 1 tugas beserta riwayat log-nya
-export async function GET(req: Request, { params }: { params: { taskNumber: string } }) {
+export async function GET(
+  req: Request, 
+  { params }: { params: Promise<{ taskNumber: string }> } // <-- Ubah jadi Promise
+) {
   try {
+    const { taskNumber } = await params; // <-- Wajib di-await
+
     const task = await prisma.task.findUnique({
-      where: { taskNumber: params.taskNumber },
+      where: { taskNumber },
       include: {
         assignee: true,
         logs: {
-          include: { user: true }, // Tarik data siapa yang nulis log
-          orderBy: { createdAt: 'asc' } // Urutkan dari yang paling lama ke baru
+          include: { user: true },
+          orderBy: { createdAt: 'asc' } 
         }
       }
     });
@@ -27,13 +32,17 @@ export async function GET(req: Request, { params }: { params: { taskNumber: stri
 }
 
 // POST: Tambah laporan progress ke tugas ini
-export async function POST(req: Request, { params }: { params: { taskNumber: string } }) {
+export async function POST(
+  req: Request, 
+  { params }: { params: Promise<{ taskNumber: string }> } // <-- Ubah jadi Promise
+) {
   try {
+    const { taskNumber } = await params; // <-- Wajib di-await
     const body = await req.json();
     const { message, status, userId } = body;
 
     const task = await prisma.task.findUnique({
-      where: { taskNumber: params.taskNumber }
+      where: { taskNumber }
     });
 
     if (!task) return NextResponse.json({ error: 'Task tidak ditemukan' }, { status: 404 });
@@ -47,7 +56,7 @@ export async function POST(req: Request, { params }: { params: { taskNumber: str
       }
     });
 
-    // 2. Update status tugas utama (kalau staf milih status baru)
+    // 2. Update status tugas utama 
     if (status && status !== task.status) {
       await prisma.task.update({
         where: { id: task.id },
