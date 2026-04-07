@@ -213,7 +213,7 @@ export default function Home() {
               <form onSubmit={handleSubmit} className="space-y-5 pb-10">
                 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Judul Tugas</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Task</label>
                   <input 
                     type="text" 
                     required 

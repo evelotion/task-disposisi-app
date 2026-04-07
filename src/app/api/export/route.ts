@@ -19,7 +19,7 @@ export async function GET() {
     worksheet.columns = [
       { header: 'No. Tugas', key: 'taskNumber', width: 20 },
       { header: 'Tanggal Dibuat', key: 'createdAt', width: 20 },
-      { header: 'Judul Tugas', key: 'title', width: 35 },
+      { header: 'Task', key: 'title', width: 35 },
       { header: 'Lokasi', key: 'location', width: 15 },
       { header: 'Disposisi Ke', key: 'assignee', width: 25 },
       { header: 'Catatan / Detail', key: 'description', width: 45 },
