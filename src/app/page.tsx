@@ -211,15 +211,28 @@ export default function Home() {
             {/* Isi Form (Sama persis kayak sebelumnya) */}
             <div className="p-6 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-5 pb-10">
+                
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Task</label>
-                  <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Contoh: Revisi Laporan" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-800" />
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Judul Tugas</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={title} 
+                    onChange={(e) => setTitle(e.target.value)} 
+                    placeholder="Contoh: Revisi Laporan" 
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal shadow-sm transition-all" 
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Lokasi</label>
-                    <select required value={location} onChange={(e) => setLocation(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-800">
+                    <select 
+                      required 
+                      value={location} 
+                      onChange={(e) => setLocation(e.target.value)} 
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 shadow-sm cursor-pointer"
+                    >
                       <option value="KP">Kantor Pusat</option>
                       <option value="CABANG">Cabang</option>
                       <option value="UNIT_KERJA">Unit Kerja</option>
@@ -227,7 +240,12 @@ export default function Home() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Kirim Ke</label>
-                    <select required value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-800">
+                    <select 
+                      required 
+                      value={assigneeId} 
+                      onChange={(e) => setAssigneeId(e.target.value)} 
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 shadow-sm cursor-pointer"
+                    >
                       <option value="" disabled>-- Staf --</option>
                       {assignees.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
@@ -236,15 +254,29 @@ export default function Home() {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Catatan</label>
-                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Instruksi tambahan..." className="min-h-[100px] w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-800 resize-y" />
+                  <textarea 
+                    value={description} 
+                    onChange={(e) => setDescription(e.target.value)} 
+                    placeholder="Instruksi tambahan..." 
+                    className="min-h-[100px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 placeholder:text-slate-400 shadow-sm resize-y" 
+                  />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Lampiran</label>
-                  <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                  <input 
+                    type="file" 
+                    accept="image/*,application/pdf" 
+                    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} 
+                    className="w-full text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" 
+                  />
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 mt-4">
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md shadow-blue-500/30 transform active:scale-95 transition-all disabled:opacity-50 mt-6"
+                >
                   {isSubmitting ? "Memproses..." : "Kirim via WhatsApp"}
                 </button>
               </form>
