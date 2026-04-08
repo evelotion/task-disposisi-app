@@ -63,11 +63,11 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">NIP (Nomor Induk Pegawai)</label>
+        <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Inisial Nama</label>
             <input 
-              type="text" required value={nip} onChange={(e) => setNip(e.target.value)} placeholder="Masukkan NIP" 
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 transition-all" 
+              type="text" required value={nip} onChange={(e) => setNip(e.target.value.toUpperCase())} placeholder="Misal: ABC" 
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 transition-all uppercase" 
             />
           </div>
 
