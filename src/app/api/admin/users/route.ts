@@ -1,6 +1,7 @@
 // src/app/api/admin/users/route.ts
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs'; // <-- Import bcrypt buat keamanan password
 
 const prisma = new PrismaClient();
 
@@ -20,19 +21,24 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { nip, name, phone, role } = body;
+    // Tangkap password dari form frontend
+    const { nip, name, phone, role, password } = body; 
     
+    // Enkripsi password sebelum masuk database (sama kayak di seed)
+    const hashedPassword = await bcrypt.hash(password || 'password123', 10);
+
     const newUser = await prisma.user.create({
       data: { 
         nip: nip.toUpperCase(), 
         name, 
         phone, 
-        role 
+        role,
+        password: hashedPassword // <--- TAMBAHIN INI BIAR VERCEL GAK NGAMUK 🔥
       }
     });
     return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Gagal menambah user. Pastikan NIP tidak duplikat.' }, { status: 500 });
+    return NextResponse.json({ error: 'Gagal menambah user. Pastikan Inisial tidak duplikat.' }, { status: 500 });
   }
 }
 
