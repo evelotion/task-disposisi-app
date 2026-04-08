@@ -113,7 +113,7 @@ export default function Home() {
           const waNumber = selectedStaff.phone;
           const taskUrl = `${window.location.origin}/task/${taskNumber}`;
           const waText = `Halo ${selectedStaff.name}, ada disposisi baru terkait:%0A%0ANo: *${taskNumber}*%0ALokasi: ${location}%0A*${title}*%0A%0ACek detail instruksi dan lapor progress pengerjaan melalui link berikut:%0A${taskUrl}`;
-          window.open(`https://wa.me/${waNumber}?text=${waText}`, "_blank");
+          window.location.href = `https://wa.me/${waNumber}?text=${waText}`;
         }
         return `Tugas ${taskNumber} berhasil dibuat!`;
       },
