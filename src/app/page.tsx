@@ -116,17 +116,22 @@ export default function Home() {
             waNumber = '62' + waNumber.substring(1);
           }
 
-          // 2. Susun teks pakai \n (enter asli), lalu bungkus pakai encodeURIComponent
+          // 2. Susun teks dan encode
           const taskUrl = `${window.location.origin}/task/${taskNumber}`;
           const rawText = `Halo ${selectedStaff.name}, ada disposisi baru terkait:\n\nNo: *${taskNumber}*\nLokasi: ${location}\n*${title}*\n\nCek detail instruksi dan lapor progress pengerjaan melalui link berikut:\n${taskUrl}`;
-          
           const encodedText = encodeURIComponent(rawText);
           
-          // 3. JURUS DEEP LINK (Nembus PWA iOS & Android) 🔥
-          const waDeepLink = `whatsapp://send?phone=${waNumber}&text=${encodedText}`;
+          // 3. JURUS ANTI-BLOKIR iOS PWA 🔥
+          // Pakai jalur api.whatsapp.com (paling dipercaya sama Apple)
+          const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodedText}`;
           
-          // Lempar langsung ke aplikasi WhatsApp bawaan HP
-          window.location.href = waDeepLink;
+          // Eksekusi dobrak PWA dengan target="_top" (Bukan window.location)
+          const link = document.createElement("a");
+          link.href = waUrl;
+          link.target = "_top"; // <-- INI KUNCI PEMBUKA GEMBOK iOS
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         }
         return `Tugas ${taskNumber} berhasil dibuat!`;
       },
