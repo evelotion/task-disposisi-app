@@ -14,7 +14,7 @@ datasource db {
 // -------------------------------------------------
 enum Role {
   ADMIN
-  DIREKSI
+  KADEP   // <-- Berubah dari DIREKSI
   STAF
 }
 

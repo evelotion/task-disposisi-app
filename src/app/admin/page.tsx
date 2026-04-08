@@ -109,7 +109,7 @@ export default function Admin() {
                   <p className="text-slate-400 text-sm font-medium mb-1">Command Center</p>
                   <h1 className="text-2xl font-bold">Admin Panel</h1>
                 </div>
-                {currentUser.role === "DIREKSI" ? (
+                {currentUser.role === "Kadep" ? (
                   <button onClick={() => router.push("/")} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                   </button>
@@ -148,7 +148,7 @@ export default function Admin() {
                 ) : (
                   users.map((u: any) => (
                     <div key={u.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 transition hover:border-slate-300">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${u.role === 'DIREKSI' ? 'bg-indigo-100 text-indigo-600' : u.role === 'ADMIN' ? 'bg-slate-800 text-white' : 'bg-emerald-100 text-emerald-600'}`}>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${u.role === 'Kadep' ? 'bg-indigo-100 text-indigo-600' : u.role === 'ADMIN' ? 'bg-slate-800 text-white' : 'bg-emerald-100 text-emerald-600'}`}>
                         {u.name.charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -196,7 +196,7 @@ export default function Admin() {
                     <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 font-bold text-slate-900 shadow-sm cursor-pointer">
                       <option value="STAF">STAF</option>
                       <option value="ADMIN">ADMIN</option>
-                      <option value="DIREKSI">DIREKSI</option>
+                      <option value="KADEP">KADEP</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">

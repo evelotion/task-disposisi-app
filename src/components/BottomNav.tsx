@@ -22,7 +22,7 @@ export default function BottomNav() {
   // Sembunyikan navigasi jika belum render, belum login, atau di halaman login
   if (!mounted || !user || pathname === "/login") return null;
 
-  const isBos = user.role === "ADMIN" || user.role === "DIREKSI";
+  const isBos = user.role === "ADMIN" || user.role === "KADEP";
 
   const handleLogout = () => {
     localStorage.removeItem("user_session");

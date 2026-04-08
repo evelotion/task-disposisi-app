@@ -37,7 +37,7 @@ export default function Login() {
       toast.success(`Selamat datang, ${data.user.name}!`);
 
       // Arahin sesuai role
-      if (data.user.role === "DIREKSI") {
+      if (data.user.role === "KADEP") {
         router.push("/");
       } else if (data.user.role === "ADMIN") {
         router.push("/admin");

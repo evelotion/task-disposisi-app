@@ -14,7 +14,7 @@ async function main() {
 
   // Data User Asli Kantor Lu
   const usersData = [
-    { nip: 'ABC', name: 'Andreanne B Christie', phone: '62811111111', role: Role.DIREKSI }, // Kepala Departemen (Satu-satunya pemberi tugas)
+    { nip: 'ABC', name: 'Andreanne B Christie', phone: '62811111111', role: Role.KADEP }, // Kepala Departemen (Satu-satunya pemberi tugas)
     { nip: 'FER', name: 'Dian Ferdian', phone: '62811111112', role: Role.STAF },
     { nip: 'NOV', name: 'Novianti Siswandi', phone: '62811111113', role: Role.STAF },
     { nip: 'MAU', name: 'Maulina Ayu Arini', phone: '62811111114', role: Role.STAF },
