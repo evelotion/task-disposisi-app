@@ -1,24 +1,44 @@
+// src/app/dashboard/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // <-- Import Router buat redirect
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Dashboard() {
+  const router = useRouter(); // <-- Aktifin Router
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"BERJALAN" | "SELESAI">("BERJALAN");
 
-  // Ambil data tugas saat halaman dibuka
+  // Pengecekan Akses (Authentication & Authorization) 🔥
   useEffect(() => {
+    const session = localStorage.getItem("user_session");
+    
+    // 1. Kalau belum login, tendang ke halaman login
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+
+    const parsedUser = JSON.parse(session);
+    
+    // 2. Kalau jabatannya STAF, tendang ke halamannya sendiri
+    if (parsedUser.role !== "KADEP" && parsedUser.role !== "ADMIN") {
+      router.push("/my-tasks");
+      return;
+    }
+
+    // 3. Kalau lolos (KADEP/ADMIN), baru ambil data tugas
     fetch("/api/tasks")
       .then((res) => res.json())
       .then((data) => {
         setTasks(data);
         setIsLoading(false);
       });
-  }, []);
+  }, [router]);
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "PENDING" ? "DONE" : "PENDING";
