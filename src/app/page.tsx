@@ -110,10 +110,24 @@ export default function Home() {
 
         const selectedStaff: any = assignees.find((a: any) => a.id === assigneeId);
         if (selectedStaff) {
-          const waNumber = selectedStaff.phone;
+          // 1. AUTO-FORMAT NOMOR HP (Ubah 08 jadi 628 dan hapus spasi/strip)
+          let waNumber = selectedStaff.phone.replace(/\D/g, ''); 
+          if (waNumber.startsWith('0')) {
+            waNumber = '62' + waNumber.substring(1);
+          }
+
           const taskUrl = `${window.location.origin}/task/${taskNumber}`;
           const waText = `Halo ${selectedStaff.name}, ada disposisi baru terkait:%0A%0ANo: *${taskNumber}*%0ALokasi: ${location}%0A*${title}*%0A%0ACek detail instruksi dan lapor progress pengerjaan melalui link berikut:%0A${taskUrl}`;
-          window.location.href = `https://wa.me/${waNumber}?text=${waText}`;
+          
+          // 2. TRIK GHOST LINK BUAT NEMBUS PWA MOBILE 🔥
+          const waUrl = `https://wa.me/${waNumber}?text=${waText}`;
+          const link = document.createElement("a");
+          link.href = waUrl;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer"; // Keamanan tambahan
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         }
         return `Tugas ${taskNumber} berhasil dibuat!`;
       },
