@@ -16,10 +16,11 @@ export default function TaskDetail() {
 
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("");
+  const [file, setFile] = useState<File | null>(null); // State buat nampung foto 🔥
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Referensi untuk fitur Auto-Scroll ke bawah
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Referensi ke input file tersembunyi
 
   useEffect(() => {
     const session = localStorage.getItem("user_session");
@@ -31,7 +32,6 @@ export default function TaskDetail() {
     fetchTask();
   }, [taskNumber]);
 
-  // Efek untuk Auto-Scroll setiap kali data task (dan chat-nya) berubah
   useEffect(() => {
     if (task?.logs) {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,23 +56,40 @@ export default function TaskDetail() {
 
   const handleUpdateProgress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return toast.error("Pesan laporan tidak boleh kosong!");
+    if (!message.trim() && !file) return toast.error("Pesan atau foto tidak boleh kosong!");
     setIsSubmitting(true);
 
     const submitUpdate = async () => {
+      let attachmentUrl = "";
+
+      // Kalau ada file, upload ke Cloudinary dulu 🔥
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "ml_default"); 
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST", body: formData,
+        });
+        const uploadData = await uploadRes.json();
+        attachmentUrl = uploadData.secure_url; 
+      }
+
+      // Lempar data ke API
       const res = await fetch(`/api/tasks/${taskNumber}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, status, userId: currentUser.id })
+        body: JSON.stringify({ message, status, userId: currentUser.id, attachmentUrl })
       });
       if (!res.ok) throw new Error("Gagal mengirim update");
     };
 
     toast.promise(submitUpdate(), {
-      loading: 'Mengirim laporan...',
+      loading: file ? 'Mengupload gambar & laporan...' : 'Mengirim laporan...',
       success: () => {
         setMessage("");
-        fetchTask(); // Tarik data chat terbaru
+        setFile(null); // Reset file
+        fetchTask(); 
         return 'Laporan progress berhasil dikirim!';
       },
       error: 'Terjadi kesalahan sistem.',
@@ -117,12 +134,9 @@ export default function TaskDetail() {
         <div className="flex-1 overflow-y-auto bg-slate-50 pb-4">
           
           {isLoading ? (
-            /* Skeleton Loading untuk Konten */
             <div className="p-6 space-y-4">
               <div className="h-6 bg-slate-200 rounded animate-pulse w-3/4 mb-6"></div>
               <div className="h-16 bg-slate-200 rounded-xl animate-pulse w-full"></div>
-              <div className="h-4 bg-slate-200 rounded animate-pulse w-full"></div>
-              <div className="h-4 bg-slate-200 rounded animate-pulse w-5/6"></div>
             </div>
           ) : task && (
             <>
@@ -148,9 +162,9 @@ export default function TaskDetail() {
                 </div>
 
                 {task.attachmentUrl && (
-                  <a href={task.attachmentUrl} target="_blank" className="mt-4 flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 w-full py-3 rounded-xl transition shadow-md">
+                  <a href={task.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-4 flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 w-full py-3 rounded-xl transition shadow-md">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                    Lihat Lampiran File
+                    Lihat Lampiran File Tugas
                   </a>
                 )}
               </div>
@@ -170,22 +184,29 @@ export default function TaskDetail() {
                     </div>
                   ) : (
                     task.logs.map((log: any) => {
-                      const isMe = log.userId === currentUser.id; // Cek apakah pesan ini diketik oleh user yang lagi login
+                      const isMe = log.userId === currentUser.id; 
                       return (
                         <div key={log.id} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-[85%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                             <span className="text-[10px] font-bold text-slate-400 mb-1 px-1">
                               {isMe ? 'Anda' : log.user.name} • {new Date(log.createdAt).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}
                             </span>
-                            <div className={`p-3.5 rounded-2xl shadow-sm border ${isMe ? 'bg-emerald-600 text-white rounded-br-none border-emerald-700' : 'bg-white text-slate-700 rounded-bl-none border-slate-200'}`}>
-                              <p className={`text-sm leading-relaxed ${isMe ? 'font-medium' : 'font-medium'}`}>{log.message}</p>
+                            
+                            <div className={`p-2.5 rounded-2xl shadow-sm border ${isMe ? 'bg-emerald-600 text-white rounded-br-none border-emerald-700' : 'bg-white text-slate-700 rounded-bl-none border-slate-200'}`}>
+                              {/* Render Fotonya kalau ada 🔥 */}
+                              {log.attachmentUrl && (
+                                <a href={log.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                                  <img src={log.attachmentUrl} alt="Lampiran Laporan" className="mb-2 w-full max-h-48 object-cover rounded-xl border border-black/10 shadow-sm" />
+                                </a>
+                              )}
+                              <p className={`text-sm px-1.5 pb-1 leading-relaxed ${isMe ? 'font-medium' : 'font-medium'}`}>{log.message}</p>
                             </div>
+
                           </div>
                         </div>
                       );
                     })
                   )}
-                  {/* Elemen kosong untuk target Auto-Scroll */}
                   <div ref={chatEndRef} className="h-1"></div>
                 </div>
               </div>
@@ -196,7 +217,19 @@ export default function TaskDetail() {
         {/* Input Laporan Progress (Sticky Bottom ala WhatsApp) */}
         {!isLoading && task && (
           <div className="bg-white border-t border-slate-200 p-3 pb-4 md:rounded-b-[2rem] z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-            <form onSubmit={handleUpdateProgress} className="flex flex-col gap-2">
+            <form onSubmit={handleUpdateProgress} className="flex flex-col gap-2 relative">
+              
+              {/* Notifikasi mini kalau ada foto yang dipilih */}
+              {file && (
+                <div className="absolute -top-12 left-2 right-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl flex items-center justify-between text-xs font-bold text-emerald-700 shadow-md animate-in slide-in-from-bottom-2">
+                  <span className="truncate flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    Foto Siap Dikirim
+                  </span>
+                  <button type="button" onClick={() => setFile(null)} className="text-red-500 hover:text-red-700 p-1">Hapus</button>
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <select 
                   value={status} 
@@ -208,18 +241,27 @@ export default function TaskDetail() {
                   <option value="REVISION">Revisi</option>
                   <option value="DONE">Selesai ✅</option>
                 </select>
-                <div className="flex-1 relative">
+                
+                <div className="flex-1 relative flex items-center bg-slate-50 border border-slate-200 rounded-full focus-within:ring-2 focus-within:ring-emerald-500 transition-all overflow-hidden">
+                  
+                  {/* Tombol Klip Kertas buat pilih Foto */}
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="pl-4 pr-2 text-slate-400 hover:text-emerald-600 transition">
+                    <svg className="w-5 h-5 transform -rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                  </button>
+                  <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} />
+
                   <input 
                     type="text" 
                     value={message} 
                     onChange={(e) => setMessage(e.target.value)} 
                     placeholder="Ketik laporan..." 
-                    className="w-full rounded-full border border-slate-200 bg-slate-50 pl-4 pr-12 py-2.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-800 transition-all"
+                    className="w-full bg-transparent pr-12 py-3 text-sm focus:outline-none font-medium text-slate-800"
                   />
+                  
                   <button 
                     type="submit" 
-                    disabled={isSubmitting || !message.trim()}
-                    className="absolute right-1 top-1 bottom-1 aspect-square bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-full flex items-center justify-center transition-all transform active:scale-90"
+                    disabled={isSubmitting || (!message.trim() && !file)}
+                    className="absolute right-1 top-1 bottom-1 aspect-square bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-full flex items-center justify-center transition-all transform active:scale-95"
                   >
                     <svg className="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                   </button>

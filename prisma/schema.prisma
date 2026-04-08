@@ -74,16 +74,13 @@ model Task {
 
 // Tabel Baru: Untuk menyimpan riwayat chat/progress
 model TaskLog {
-  id        String   @id @default(cuid())
-  message   String   // Isi update/laporan dari staf
+  id            String   @id @default(cuid())
+  message       String   // Isi update/laporan dari staf
+  attachmentUrl String?  // <--- TAMBAHIN BARIS INI BRO 🔥 (Boleh kosong/opsional)
   
-  // Relasi tugas mana yang diupdate
-  taskId    String
-  task      Task     @relation("TaskHistory", fields: [taskId], references: [id], onDelete: Cascade)
-  
-  // Relasi siapa yang nulis log ini
-  userId    String
-  user      User     @relation("UserLogs", fields: [userId], references: [id])
-  
-  createdAt DateTime @default(now())
+  taskId        String
+  task          Task     @relation("TaskHistory", fields: [taskId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation("UserLogs", fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
 }

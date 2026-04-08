@@ -34,12 +34,12 @@ export async function GET(
 // POST: Tambah laporan progress ke tugas ini
 export async function POST(
   req: Request, 
-  { params }: { params: Promise<{ taskNumber: string }> } // <-- Ubah jadi Promise
+  { params }: { params: Promise<{ taskNumber: string }> }
 ) {
   try {
-    const { taskNumber } = await params; // <-- Wajib di-await
+    const { taskNumber } = await params; 
     const body = await req.json();
-    const { message, status, userId } = body;
+    const { message, status, userId, attachmentUrl } = body; // <-- Tangkap attachmentUrl
 
     const task = await prisma.task.findUnique({
       where: { taskNumber }
@@ -47,12 +47,13 @@ export async function POST(
 
     if (!task) return NextResponse.json({ error: 'Task tidak ditemukan' }, { status: 404 });
 
-    // 1. Simpan pesan ke tabel TaskLog
+    // 1. Simpan pesan dan foto ke tabel TaskLog
     const newLog = await prisma.taskLog.create({
       data: {
         message,
         taskId: task.id,
-        userId: userId
+        userId: userId,
+        attachmentUrl // <-- Masukin ke database
       }
     });
 
