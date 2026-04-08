@@ -22,7 +22,6 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
-    // 1. Proteksi Halaman & Ambil Session
     const session = localStorage.getItem("user_session");
     if (!session) {
       router.push("/login");
@@ -30,36 +29,27 @@ export default function Home() {
     }
     
     const parsedUser = JSON.parse(session);
-    // Kalau STAF yang login, lempar ke halaman my-tasks
     if (parsedUser.role === "STAF") {
       router.push("/my-tasks");
       return;
     }
     setUser(parsedUser);
 
-    // 2. Load Data Karyawan (Untuk Dropdown Form)
     fetch("/api/users")
       .then((res) => res.json())
       .then((data) => setAssignees(data));
 
-    // 3. Load Data Tugas Terbaru (Untuk list di dashboard)
     fetch("/api/tasks")
       .then((res) => res.json())
-      .then((data) => {
-        // Ambil 5 tugas terbaru aja buat preview
-        setRecentTasks(data.slice(0, 5));
-      });
+      .then((data) => setRecentTasks(data.slice(0, 5)));
   }, [router]);
 
-  // Fungsi Fitur Pencarian
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery) return;
-    // Ngarahin ke halaman detail task (Fase 6 nanti)
     router.push(`/task/${searchQuery.toUpperCase()}`);
   };
 
-  // Fungsi Submit Form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -90,22 +80,16 @@ export default function Home() {
       const responseData = await taskRes.json();
       const generatedTaskNumber = responseData.taskNumber;
 
-      // Lempar ke WA dengan format baru (Sistem Loop)
       const selectedStaff: any = assignees.find((a: any) => a.id === assigneeId);
       if (selectedStaff) {
         const waNumber = selectedStaff.phone;
-        const taskUrl = `${window.location.origin}/task/${generatedTaskNumber}`; // Link otomatis menyesuaikan domain
-        
+        const taskUrl = `${window.location.origin}/task/${generatedTaskNumber}`;
         const waText = `Halo ${selectedStaff.name}, ada disposisi baru terkait:%0A%0ANo: *${generatedTaskNumber}*%0ALokasi: ${location}%0A*${title}*%0A%0ACek detail instruksi dan lapor progress pengerjaan melalui link berikut:%0A${taskUrl}`;
-        
         window.open(`https://wa.me/${waNumber}?text=${waText}`, "_blank");
       }
 
-      // Reset form & kembali ke dashboard
       setTitle(""); setDescription(""); setAssigneeId(""); setLocation("KP"); setFile(null);
       setView("dashboard");
-      
-      // Refresh list
       fetch("/api/tasks").then(res => res.json()).then(data => setRecentTasks(data.slice(0, 5)));
       
     } catch (error) {
@@ -120,17 +104,16 @@ export default function Home() {
     router.push("/login");
   };
 
-  if (!user) return null; // Layar kosong sebentar saat loading
+  if (!user) return null;
 
   return (
     <main className="min-h-screen bg-slate-100 flex justify-center font-sans">
       <div className="w-full max-w-md bg-slate-50 min-h-screen md:min-h-[850px] md:my-8 md:rounded-[2.5rem] md:shadow-2xl overflow-hidden flex flex-col relative md:border-8 border-white">
         
-        {/* TAMPILAN DASHBOARD UTAMA */}
         {view === "dashboard" ? (
           <>
             {/* Header Profil */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 px-6 pt-10 pb-6 text-white rounded-b-3xl shadow-md">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 px-6 pt-10 pb-6 text-white md:rounded-t-[2rem] rounded-b-3xl shadow-md z-10 relative">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <p className="text-blue-200 text-sm font-medium mb-1">Selamat datang,</p>
@@ -144,16 +127,11 @@ export default function Home() {
               {/* Fitur Pencarian Task */}
               <form onSubmit={handleSearch} className="relative">
                 <input 
-                  type="text" 
-                  placeholder="Cari Nomor Task (Cth: TSK-001)" 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  type="text" placeholder="Cari Nomor Task (Cth: TSK-001)" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-white/10 border border-white/20 text-white placeholder:text-blue-200 rounded-xl px-4 py-3 pl-11 focus:outline-none focus:bg-white/20 focus:border-white/40 transition uppercase font-medium tracking-wide"
                 />
                 <svg className="w-5 h-5 absolute left-4 top-3.5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                <button type="submit" className="absolute right-2 top-2 bg-white text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-50 transition">
-                  CARI
-                </button>
+                <button type="submit" className="absolute right-2 top-2 bg-white text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-50 transition">CARI</button>
               </form>
             </div>
 
@@ -161,10 +139,10 @@ export default function Home() {
             <div className="flex-1 p-6 overflow-y-auto">
               <div className="flex justify-between items-end mb-4">
                 <h2 className="text-lg font-extrabold text-slate-800">Riwayat Terakhir</h2>
-                <button onClick={() => router.push("/admin")} className="text-xs font-bold text-blue-600 hover:text-blue-800">Menu Admin</button>
               </div>
               
-              <div className="space-y-3 pb-24">
+              {/* PERBAIKAN 1: Padding Bottom (pb-48) diperbesar biar list bisa di-scroll melewati tombol */}
+              <div className="space-y-3 pb-48">
                 {recentTasks.length === 0 ? (
                   <p className="text-center text-slate-500 text-sm mt-8">Belum ada tugas yang dibuat.</p>
                 ) : (
@@ -187,20 +165,35 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Floating Action Button (FAB) untuk Form Baru */}
-            <div className="absolute bottom-6 left-0 right-0 flex justify-center px-6">
+            {/* PERBAIKAN 2: Posisi Tombol Disposisi dinaikkan (bottom-24) biar gak nabrak Navbar */}
+            <div className="absolute bottom-24 left-0 right-0 flex justify-center px-6 z-10">
               <button onClick={() => setView("form")} className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-slate-900/30 flex items-center justify-center gap-2 transform transition active:scale-95">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
                 Buat Disposisi Baru
               </button>
             </div>
+
+            {/* PERBAIKAN 3: Bottom Navigation Bar ala App Native */}
+            <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center pt-3 pb-5 px-4 z-20 md:rounded-b-[2rem]">
+              <button className="flex flex-col items-center gap-1 text-blue-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                <span className="text-[10px] font-bold">Beranda</span>
+              </button>
+              
+              <button onClick={() => window.open("/api/export", "_blank")} className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-700 transition">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <span className="text-[10px] font-bold">Rekap Excel</span>
+              </button>
+
+              <button onClick={() => router.push("/admin")} className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-700 transition">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span className="text-[10px] font-bold">Admin</span>
+              </button>
+            </div>
           </>
         ) : (
-          /* =======================================
-             TAMPILAN FORM INPUT (SLIDE OVER)
-             ======================================= */
+          /* TAMPILAN FORM INPUT */
           <div className="flex-1 bg-white flex flex-col h-full animate-in slide-in-from-bottom-8 duration-300">
-            {/* Header Form */}
             <div className="border-b border-slate-100 p-4 flex items-center gap-3 bg-white sticky top-0 z-10">
               <button onClick={() => setView("dashboard")} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 text-slate-600">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
@@ -208,31 +201,16 @@ export default function Home() {
               <h2 className="font-bold text-slate-800 text-lg">Buat Disposisi</h2>
             </div>
 
-            {/* Isi Form (Sama persis kayak sebelumnya) */}
             <div className="p-6 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-5 pb-10">
-                
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Task</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={title} 
-                    onChange={(e) => setTitle(e.target.value)} 
-                    placeholder="Contoh: Revisi Laporan" 
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal shadow-sm transition-all" 
-                  />
+                  <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Contoh: Revisi Laporan" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal shadow-sm transition-all" />
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Lokasi</label>
-                    <select 
-                      required 
-                      value={location} 
-                      onChange={(e) => setLocation(e.target.value)} 
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 shadow-sm cursor-pointer"
-                    >
+                    <select required value={location} onChange={(e) => setLocation(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 shadow-sm cursor-pointer">
                       <option value="KP">Kantor Pusat</option>
                       <option value="CABANG">Cabang</option>
                       <option value="UNIT_KERJA">Unit Kerja</option>
@@ -240,50 +218,27 @@ export default function Home() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Kirim Ke</label>
-                    <select 
-                      required 
-                      value={assigneeId} 
-                      onChange={(e) => setAssigneeId(e.target.value)} 
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 shadow-sm cursor-pointer"
-                    >
+                    <select required value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 shadow-sm cursor-pointer">
                       <option value="" disabled>-- Staf --</option>
                       {assignees.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
                   </div>
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Catatan</label>
-                  <textarea 
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)} 
-                    placeholder="Instruksi tambahan..." 
-                    className="min-h-[100px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 placeholder:text-slate-400 shadow-sm resize-y" 
-                  />
+                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Instruksi tambahan..." className="min-h-[100px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 placeholder:text-slate-400 shadow-sm resize-y" />
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Lampiran</label>
-                  <input 
-                    type="file" 
-                    accept="image/*,application/pdf" 
-                    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} 
-                    className="w-full text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" 
-                  />
+                  <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} className="w-full text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
                 </div>
-
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md shadow-blue-500/30 transform active:scale-95 transition-all disabled:opacity-50 mt-6"
-                >
+                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md shadow-blue-500/30 transform active:scale-95 transition-all disabled:opacity-50 mt-6">
                   {isSubmitting ? "Memproses..." : "Kirim via WhatsApp"}
                 </button>
               </form>
             </div>
           </div>
         )}
-
       </div>
     </main>
   );

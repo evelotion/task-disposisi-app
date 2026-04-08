@@ -1,6 +1,6 @@
-﻿import type { Metadata, Viewport } from "next";
-import { Toaster } from "react-hot-toast";
-import BottomNav from "../components/BottomNav";
+﻿// src/app/layout.tsx
+import type { Metadata, Viewport } from "next";
+import { Toaster } from "react-hot-toast"; // <-- 1. Import Toaster
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -32,21 +32,27 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
-      {/* Tambahkan bg-slate-100 di body biar warna background konsisten */}
-      <body className="bg-slate-100">
-        {children}
-        <BottomNav />
+      <body>
+        {/* 2. Taruh Toaster di sini biar aktif se-aplikasi */}
         <Toaster 
           position="top-center" 
           toastOptions={{
             duration: 3000,
             style: {
-              borderRadius: '12px',
               background: '#333',
               color: '#fff',
+              fontWeight: 'bold',
+              borderRadius: '12px',
+            },
+            success: {
+              style: { background: '#10b981' }, // Hijau Tailwind
+            },
+            error: {
+              style: { background: '#ef4444' }, // Merah Tailwind
             },
           }} 
         />
+        {children}
       </body>
     </html>
   );
