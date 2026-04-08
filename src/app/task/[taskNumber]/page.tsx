@@ -87,6 +87,41 @@ export default function TaskDetail() {
     toast.promise(submitUpdate(), {
       loading: file ? 'Mengupload gambar & laporan...' : 'Mengirim laporan...',
       success: () => {
+        
+        // --- FITUR AUTO-WA KE BOS (KADEP) 🔥 ---
+        fetch("/api/users")
+          .then(res => res.json())
+          .then(users => {
+            // Cari user yang jabatannya KADEP
+            const bos = users.find((u: any) => u.role === "KADEP");
+            
+            if (bos && task) {
+              let waNumber = bos.phone.replace(/\D/g, ''); 
+              if (waNumber.startsWith('0')) {
+                waNumber = '62' + waNumber.substring(1);
+              }
+
+              const taskUrl = `${window.location.origin}/task/${taskNumber}`;
+              const reportText = message ? message : "Ada lampiran foto baru.";
+              const statusText = status.replace("_", " ");
+              
+              // Susun teks laporan untuk Bos
+              const rawText = `*UPDATE TUGAS MASUK* 🔔\n\nNo: *${task.taskNumber}*\nJudul: ${task.title}\nDari: ${currentUser.name}\n\n*Status:* ${statusText}\n*Pesan:* ${reportText}\n\nCek progres lengkap dan foto lampiran di sini:\n${taskUrl}`;
+              
+              const encodedText = encodeURIComponent(rawText);
+              
+              // Jurus nembus PWA iOS/Android
+              const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodedText}`;
+              const link = document.createElement("a");
+              link.href = waUrl;
+              link.target = "_top"; 
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }
+          });
+        // ----------------------------------------
+
         setMessage("");
         setFile(null); // Reset file
         fetchTask(); 
