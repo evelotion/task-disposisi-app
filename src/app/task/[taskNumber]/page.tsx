@@ -106,7 +106,7 @@ export default function TaskDetail() {
               const statusText = status.replace("_", " ");
               
               // Susun teks laporan untuk Bos
-              const rawText = `*UPDATE TUGAS MASUK* 🔔\n\nNo: *${task.taskNumber}*\nJudul: ${task.title}\nDari: ${currentUser.name}\n\n*Status:* ${statusText}\n*Pesan:* ${reportText}\n\nCek progres lengkap dan foto lampiran di sini:\n${taskUrl}`;
+              const rawText = `*UPDATE TUGAS MASUK* 🔔\n\nNo: *${task.taskNumber}*\nJudul: ${task.title}\nDari: ${currentUser.name}\n\n*Status:* ${statusText}\n*Pesan:* ${reportText}\n\nCek progres lengkap dan lampiran di sini:\n${taskUrl}`;
               
               const encodedText = encodeURIComponent(rawText);
               
