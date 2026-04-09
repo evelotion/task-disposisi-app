@@ -76,7 +76,6 @@ export default function Admin() {
   };
 
   const handleDeleteUser = async (id: string, userName: string) => {
-    // Kita pakai confirm bawaan dulu untuk keamanan hapus data, tapi efeknya dibalut Toast
     if (!window.confirm(`Yakin ingin menghapus ${userName}?`)) return;
 
     const deleteReq = async () => {
@@ -91,6 +90,26 @@ export default function Admin() {
         return `${userName} berhasil dihapus!`;
       },
       error: 'Gagal menghapus pengguna.',
+    });
+  };
+
+  // FITUR BARU: RESET PASSWORD 🔥
+  const handleResetPassword = async (id: string, userName: string) => {
+    if (!window.confirm(`Yakin ingin mereset password ${userName} menjadi "password123"?`)) return;
+
+    const resetReq = async () => {
+      const res = await fetch(`/api/admin/users`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: "reset_password" }),
+      });
+      if (!res.ok) throw new Error("Gagal reset");
+    };
+
+    toast.promise(resetReq(), {
+      loading: 'Mereset password...',
+      success: `Password ${userName} direset ke "password123"`,
+      error: 'Gagal mereset password.',
     });
   };
 
@@ -109,16 +128,27 @@ export default function Admin() {
                   <p className="text-slate-400 text-sm font-medium mb-1">Command Center</p>
                   <h1 className="text-2xl font-bold">Admin Panel</h1>
                 </div>
-                {currentUser.role === "Kadep" ? (
-                  <button onClick={() => router.push("/")} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                  </button>
-                ) : (
-                  <button onClick={() => { localStorage.removeItem("user_session"); router.push("/login"); }} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                  </button>
-                )}
+                
+                {/* Kumpulan Tombol Kanan Atas 🔥 */}
+                <div className="flex gap-2 shrink-0">
+                  {/* Tombol Export Excel khusus Admin */}
+                  <a href="/api/export" target="_blank" rel="noopener noreferrer" className="p-2 bg-emerald-500 hover:bg-emerald-600 rounded-full transition shadow-md" title="Download Rekap Excel">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  </a>
+                  
+                  {/* Tombol Back / Logout */}
+                  {currentUser.role === "KADEP" ? (
+                    <button onClick={() => router.push("/")} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                    </button>
+                  ) : (
+                    <button onClick={() => { localStorage.removeItem("user_session"); router.push("/login"); }} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    </button>
+                  )}
+                </div>
               </div>
+
               <div className="flex gap-4">
                 <div className="bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm border border-white/10">
                   <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Staf</p>
@@ -148,7 +178,7 @@ export default function Admin() {
                 ) : (
                   users.map((u: any) => (
                     <div key={u.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 transition hover:border-slate-300">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${u.role === 'Kadep' ? 'bg-indigo-100 text-indigo-600' : u.role === 'ADMIN' ? 'bg-slate-800 text-white' : 'bg-emerald-100 text-emerald-600'}`}>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${u.role === 'KADEP' ? 'bg-indigo-100 text-indigo-600' : u.role === 'ADMIN' ? 'bg-slate-800 text-white' : 'bg-emerald-100 text-emerald-600'}`}>
                         {u.name.charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -158,11 +188,20 @@ export default function Admin() {
                           <span className="text-xs font-medium text-slate-500 truncate">{u.nip}</span>
                         </div>
                       </div>
-                      {/* Tombol Hapus (Sembunyikan kalau diri sendiri) */}
+                      
+                      {/* Tombol Aksi (Sembunyikan kalau diri sendiri) */}
                       {u.id !== currentUser.id && (
-                        <button onClick={() => handleDeleteUser(u.id, u.name)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition shrink-0">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
+                        <div className="flex gap-1 shrink-0">
+                          {/* Tombol Kunci (Reset Password) 🔥 */}
+                          <button onClick={() => handleResetPassword(u.id, u.name)} className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition" title="Reset Password ke password123">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4v-4l5.618-5.618A6 6 0 0115 5v2z" /></svg>
+                          </button>
+                          
+                          {/* Tombol Hapus */}
+                          <button onClick={() => handleDeleteUser(u.id, u.name)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition" title="Hapus Pengguna">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
+                        </div>
                       )}
                     </div>
                   ))
@@ -196,7 +235,7 @@ export default function Admin() {
                     <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 font-bold text-slate-900 shadow-sm cursor-pointer">
                       <option value="STAF">STAF</option>
                       <option value="ADMIN">ADMIN</option>
-                      <option value="KADEP">KADEP</option>
+                      <option value="KADEP">KADEP</option> {/* SUDAH DIGANTI JADI KADEP 🔥 */}
                     </select>
                   </div>
                   <div className="space-y-1.5">
