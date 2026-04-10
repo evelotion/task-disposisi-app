@@ -3,21 +3,26 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // <-- Import Router buat redirect
+import { useRouter } from "next/navigation"; 
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Dashboard() {
-  const router = useRouter(); // <-- Aktifin Router
+  const router = useRouter();
+  
+  // State Data Utama
   const [tasks, setTasks] = useState<any[]>([]);
+  const [assignees, setAssignees] = useState<any[]>([]); // Menyimpan daftar staf 🔥
   const [isLoading, setIsLoading] = useState(true);
+  
+  // State Filter & Pencarian
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("ALL"); // Menyimpan ID Staf yang difilter 🔥
   const [activeTab, setActiveTab] = useState<"BERJALAN" | "SELESAI">("BERJALAN");
 
-  // Pengecekan Akses (Authentication & Authorization) 🔥
+  // Pengecekan Akses (Authentication & Authorization)
   useEffect(() => {
     const session = localStorage.getItem("user_session");
     
-    // 1. Kalau belum login, tendang ke halaman login
     if (!session) {
       router.push("/login");
       return;
@@ -25,19 +30,29 @@ export default function Dashboard() {
 
     const parsedUser = JSON.parse(session);
     
-    // 2. Kalau jabatannya STAF, tendang ke halamannya sendiri
     if (parsedUser.role !== "KADEP" && parsedUser.role !== "ADMIN") {
       router.push("/my-tasks");
       return;
     }
 
-    // 3. Kalau lolos (KADEP/ADMIN), baru ambil data tugas
-    fetch("/api/tasks")
-      .then((res) => res.json())
-      .then((data) => {
-        setTasks(data);
-        setIsLoading(false);
-      });
+    // Ambil Data Tasks & Users secara paralel biar cepat 🔥
+    Promise.all([
+      fetch("/api/tasks").then(res => res.json()),
+      fetch("/api/users").then(res => res.json())
+    ])
+    .then(([tasksData, usersData]) => {
+      setTasks(tasksData);
+      
+      // Ambil hanya user yang jabatannya STAF untuk dropdown filter
+      const staffOnly = usersData.filter((u: any) => u.role === "STAF");
+      setAssignees(staffOnly);
+      
+      setIsLoading(false);
+    })
+    .catch(err => {
+      console.error("Gagal ambil data", err);
+      setIsLoading(false);
+    });
   }, [router]);
 
   const toggleStatus = async (id: string, currentStatus: string) => {
@@ -66,28 +81,37 @@ export default function Dashboard() {
     return { total, berjalan, selesai };
   }, [tasks]);
 
+  // Logika Filter Berlapis (Tab + Search + Filter Karyawan) 🔥
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
+      // 1. Filter Tab (Berjalan vs Selesai)
       const matchTab = activeTab === "BERJALAN" 
         ? task.status !== "DONE" 
         : task.status === "DONE";
 
+      // 2. Filter Dropdown Nama Karyawan 🔥
+      const matchStaff = selectedStaffId === "ALL" 
+        ? true 
+        : task.assigneeId === selectedStaffId;
+
+      // 3. Filter Text Search
       const query = searchQuery.toLowerCase();
       const matchSearch = 
         task.title.toLowerCase().includes(query) ||
         task.taskNumber.toLowerCase().includes(query) ||
         task.assignee.name.toLowerCase().includes(query);
 
-      return matchTab && matchSearch;
+      // Lolos filter kalau memenuhi ketiga syarat di atas
+      return matchTab && matchStaff && matchSearch;
     });
-  }, [tasks, activeTab, searchQuery]);
+  }, [tasks, activeTab, searchQuery, selectedStaffId]);
 
   return (
     <main className="min-h-screen bg-slate-100 flex justify-center font-sans">
       <div className="w-full max-w-md bg-slate-50 min-h-screen md:min-h-[850px] md:rounded-[2.5rem] md:shadow-2xl overflow-hidden flex flex-col relative md:my-8 md:border-8 border-white">
         
         {/* Top App Bar & Dashboard Header */}
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-slate-200 px-4 pt-4 pb-2">
+        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-slate-200 px-4 pt-4 pb-2 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
           <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-3">
               <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-slate-100 transition-colors active:scale-95">
@@ -106,7 +130,7 @@ export default function Dashboard() {
             </a>
           </div>
 
-          {/* FASE 4: SUMMARY CARDS (STATISTIK) */}
+          {/* SUMMARY CARDS (STATISTIK) */}
           <div className="grid grid-cols-3 gap-3 mb-5 px-1">
             <div className="bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl p-3.5 text-white shadow-lg shadow-slate-900/20 transform transition hover:-translate-y-0.5">
               <p className="text-[9px] font-bold text-slate-300 uppercase tracking-wider mb-1">Total Tugas</p>
@@ -122,36 +146,56 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* SMART SEARCH BAR */}
-          <div className="relative mb-3">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          {/* AREA FILTER & SEARCH 🔥 */}
+          <div className="flex gap-2 mb-3">
+            {/* Filter Dropdown Staf */}
+            <div className="w-1/3 shrink-0 relative">
+              <select 
+                value={selectedStaffId}
+                onChange={(e) => setSelectedStaffId(e.target.value)}
+                className="w-full appearance-none bg-slate-100/80 border border-transparent focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl text-xs font-bold text-slate-700 py-3 pl-3 pr-8 transition-all cursor-pointer shadow-sm"
+              >
+                <option value="ALL">Semua Staf</option>
+                {assignees.map((staf) => (
+                  <option key={staf.id} value={staf.id}>{staf.name}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+              </div>
             </div>
-            <input
-              type="text"
-              placeholder="Cari judul, no tugas, staf..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-100/80 border border-transparent focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl text-sm transition-all"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            )}
+
+            {/* Smart Search Bar */}
+            <div className="flex-1 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Cari tugas..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-3 bg-slate-100/80 border border-transparent focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl text-xs font-medium text-slate-800 transition-all shadow-sm"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-red-500 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* TAB FILTER STATUS */}
-          <div className="flex bg-slate-100 p-1 rounded-xl">
+          <div className="flex bg-slate-100/80 p-1 rounded-xl shadow-inner border border-slate-200/50">
             <button
               onClick={() => setActiveTab("BERJALAN")}
-              className={`flex-1 text-xs font-bold py-2 rounded-lg transition-all ${activeTab === "BERJALAN" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              className={`flex-1 text-xs font-extrabold py-2 rounded-lg transition-all ${activeTab === "BERJALAN" ? "bg-white text-blue-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
             >
               Berjalan
             </button>
             <button
               onClick={() => setActiveTab("SELESAI")}
-              className={`flex-1 text-xs font-bold py-2 rounded-lg transition-all ${activeTab === "SELESAI" ? "bg-white text-green-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              className={`flex-1 text-xs font-extrabold py-2 rounded-lg transition-all ${activeTab === "SELESAI" ? "bg-white text-green-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
             >
               Selesai
             </button>
@@ -173,7 +217,7 @@ export default function Dashboard() {
             ) : filteredTasks.length === 0 ? (
                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center mt-12 text-center px-4">
                  <div className="w-20 h-20 bg-slate-200/50 rounded-full flex items-center justify-center mb-4">
-                   {searchQuery ? (
+                   {searchQuery || selectedStaffId !== "ALL" ? (
                      <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                    ) : activeTab === "BERJALAN" ? (
                      <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
@@ -182,10 +226,10 @@ export default function Dashboard() {
                    )}
                  </div>
                  <h3 className="text-slate-800 font-bold mb-1">
-                   {searchQuery ? "Tidak ditemukan" : activeTab === "BERJALAN" ? "Semua tugas beres!" : "Belum ada yang selesai"}
+                   {searchQuery || selectedStaffId !== "ALL" ? "Tidak ditemukan" : activeTab === "BERJALAN" ? "Semua tugas beres!" : "Belum ada yang selesai"}
                  </h3>
                  <p className="text-slate-500 text-sm">
-                   {searchQuery ? `Pencarian "${searchQuery}" tidak ada hasilnya.` : activeTab === "BERJALAN" ? "Tidak ada tugas yang sedang berjalan saat ini." : "Tugas yang di-checklist akan masuk ke sini."}
+                   {searchQuery || selectedStaffId !== "ALL" ? "Ganti filter atau ubah kata pencarian lu." : activeTab === "BERJALAN" ? "Tidak ada tugas yang sedang berjalan saat ini." : "Tugas yang di-checklist akan masuk ke sini."}
                  </p>
                </motion.div>
             ) : (
@@ -227,7 +271,7 @@ export default function Dashboard() {
                             {task.title}
                           </h2>
                           
-                          {/* FASE 4: BADGE "BARU" DENGAN TITIK MERAH KEDIP JIKA STATUS PENDING */}
+                          {/* BADGE BARU */}
                           {task.status === "PENDING" ? (
                             <span className="flex items-center gap-1.5 text-[9px] font-black px-2 py-1 bg-red-50 text-red-600 rounded-md shrink-0 border border-red-100 shadow-sm">
                               <span className="relative flex h-2 w-2">
