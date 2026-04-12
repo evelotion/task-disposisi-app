@@ -72,15 +72,17 @@ model Task {
   logs          TaskLog[]  @relation("TaskHistory")
 }
 
-// Tabel Baru: Untuk menyimpan riwayat chat/progress
 model TaskLog {
   id            String   @id @default(cuid())
-  message       String   // Isi update/laporan dari staf
-  attachmentUrl String?  // <--- TAMBAHIN BARIS INI BRO 🔥 (Boleh kosong/opsional)
+  message       String
+  attachmentUrl String?  
+  createdAt     DateTime @default(now())
   
   taskId        String
-  task          Task     @relation("TaskHistory", fields: [taskId], references: [id], onDelete: Cascade)
+  // 🔥 Tambahin "TaskHistory" di sini biar sinkron sama tabel Task
+  task          Task     @relation("TaskHistory", fields: [taskId], references: [id])
+  
   userId        String
+  // 🔥 Tambahin "UserLogs" di sini biar sinkron sama tabel User
   user          User     @relation("UserLogs", fields: [userId], references: [id])
-  createdAt     DateTime @default(now())
 }
